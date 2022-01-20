@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>PROTOTYPE</title>
+    <style>
+        html {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        font-family: system-ui;
+    }
+
+    h2{
+        text-align: center;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+    }
+
+    p {
+        max-width: 720px;
+        text-align: center;
+        margin-bottom: 64px;
+        line-height: 24px;
+    }
+
+    .row-reverse {
+        display: flex;
+        flex-direction: row-reverse;
+        width: 100%;
+        max-width: 720px;
+    }
+
+    a {
+        text-decoration: none;
+        text-transform: uppercase;
+        color: red;
+        border: 1px solid red;
+        padding: 8px 12px;
+        border-radius: 4px;
+    }
+    </style>
+</head>
+
+<body>
+    <img src="construction.png">
+    <h2>WARNING: Experimental Prototype!</h2>
+    <p>This is an experimental research product. Using real funds might result in a total loss. There is no guarantee for any loss of funds. We can only promise you to do our best as there are some safety nets in place. STILL, YOUR USAGE OF THE APPLICATIONS IS AT YOUR OWN RISK.<br>
+    </p>
+    <div class="row-reverse">
+        <a href="#" id="$button">I understand my risk</a>
+    </div>
+    <script type="text/javascript">
+    $button.onclick = _ => {
+        localStorage.setItem('agreed_to_disclaimer', true)
+        location = '../signup/index.html'
+    }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,4 @@
+.DS_Store
+aws-keys.pem
+node_modules
+minting

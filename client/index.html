@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html>
+<!-- 
+    
+    Bitcoin DEX v0.1
+
+    This is terribly ugly code to rapidly prototype an UI 
+    for a decentralized bitcoin exchange based on non-interactive atomic swaps.
+
+
+    You can find the token protocol in /tokens.js
+    Key management via Warp Wallet is in /keys.js
+    
+    The communication with the orderbook server is in /ws-client.js 
+
+    All UI code is in this /index.html
+    
+    
+    Dependencies:
+        bitcoinjs 
+            bitcoin library. transactions, addresses, signing, etc
+            https://github.com/bitcoinjs/bitcoinjs-lib
+        
+        esplora
+            server for bitcoin blockchain data provided by Blockstream
+            https://github.com/Blockstream/esplora/blob/master/API.md
+
+        argon2
+            hard key derivation function to implement a Warp Wallet
+            https://github.com/antelle/argon2-browser
+
+        identiconJS 
+            identicons like in github
+            http://github.com/stewartlord/identicon.js
+
+
+    Credentials for testing:
+        email: daniel@bitcoin.com
+        password: Hallo
+
+ -->
+<!-- Ensure user is signed up -->
+<script type="text/javascript">
+if (!localStorage.getItem('last_email'))
+    location = 'about/index.html';
+</script>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bitcoin DEX</title>
+    <meta name="description" content="Non-custodial, decentralized bitcoin exchange to trade stablecoins."/>
+    <meta property="og:image" content="https://bitcoin-dex.net/assets/icon-512x512.png" />
+
+    <meta name="twitter:title" content="Bitcoin DEX"/>
+    <meta name="twitter:description" content="Non-custodial, decentralized bitcoin exchange to trade stablecoins."/>
+    <meta name="twitter:image" content="https://bitcoin-dex.net/assets/icon-512x512.png"/>
+    <meta name="twitter:card" content="summary_large_image"/>
+</head>
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<body>
+    <header>
+        <img src="assets/bitcoin-dex.svg">
+    </header>
+    <main>
+        <div class="row-reverse">
+            <h1 id="$tokenBalance" class="item" label="USDx Balance">$-.--</h1>
+            <img src="assets/refresh.svg" class="icon-button refresh" onclick="refreshBalance(this)" title="Refresh your balance">
+            <div class="grow"></div>
+            <img id="$identicon" class="identicon">
+        </div>
+        <div class="row">
+            <div id="$address" class="item is-address" label="Account Address"></div>
+            <svg class="icon-button icon" onclick="copyAddressToClipboard()">
+                <use xlink:href="#ic-copy"></use>
+            </svg>
+            <div class="grow"></div>
+            <h3 id="$btcBalance" class="item" label="BTC Balance">BTC -----</h3>
+        </div>
+        <nav>
+            <a href="#history">HISTORY</a>
+            <a href="#sell">SELL BTC</a>
+            <a href="#buy">BUY BTC</a>
+            <a href="#send">SEND USDx</a>
+        </nav>
+        <section route="history">
+            <h2>Transaction History</h2>
+            <div class="transactions-heading">
+                <div>Type</div>
+                <div>Status</div>
+                <div>USDx/BTC Price</div>
+                <div>BTC Amount</div>
+                <div>USDx Amount</div>
+            </div>
+            <div id="$transactions"></div>
+        </section>
+        <section route="send" hidden>
+            <h2>Send Dollars</h2>
+            <div class="row">
+                <div class="item grow" label="Recipient Address">
+                    <input id=$recipient placeholder="Enter the recipient's address" class="is-address" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="item is-dollar" label="USDx Amount">
+                    <input id=$tokenValue type="number" placeholder="42.99" step="0.1" min=0>
+                    <a id="$maxTokenValue" title="Send all your USDx" href="javascript:">Max</a>
+                </div>
+            </div>
+            <details>
+                <summary>Options</summary>
+                <div class="row-reverse">
+                    <div class="item" label="BTC Amount">
+                        <input id="$bitcoinValue" type="number" placeholder="0.001" step="0.1" min=0>
+                        <a id="$maxBitcoinValue" title="Send all your BTC">Max</a>
+                    </div>
+                    <!--       <div class="item" label="Fee Rate">
+                        <input id="$feeRate" type="number" placeholder="0.001" step="0.1" min=0>
+                    </div> -->
+                </div>
+            </details>
+            <div class="row-reverse">
+                <button id="$sendTokens">Send</button>
+            </div>
+            <div id="$output" class="item" label="Transaction Id"></div>
+        </section>
+        <section route="buy" hidden>
+            <h2>Buy Bitcoins</h2>
+            <div class="row">
+                <div class="item is-dollar" label="Offered USDx">
+                    <input id=$offeredTokenValue type="number" placeholder="1000" step="1" min="0" max="100000000" title="The amount of dollars you pay">
+                    <a id="$maxOfferedTokenValue" title="Use all your USDx">Max</a>
+                </div>
+                <div class="item is-dollar" label="BTC Price" title="The Dollar price per bitcoin">
+                    <input id=$bitcoinPrice type="number" placeholder="69420" step="1" min="0" max="100000000">
+                    <a id="$setToMarketPrice" title="Set to the current market price">Market</a>
+                </div>
+                <div class="grow"></div>
+                <h3 class="item" label="Demanded BTC" id="$demandedBitcoinValue" title="The amount of bitcoins you buy."></h3>
+            </div>
+            <div class="row-reverse">
+                <button id="$buyBtc">Buy</button>
+            </div>
+            <!--          <details>
+                <summary>Options</summary>
+                <div class="item" label="Copy and share this offer" id="$offer"></div>
+            </details> -->
+            <h2>My Open Orders</h2>
+            <table id="$myOrders" class="orderbook"></table>
+        </section>
+        <section route="sell" hidden>
+            <h2>Sell Bitcoins</h2>
+            <table id="$orderbook" class="orderbook"></table>
+            <!--             <details>
+                <summary>Options</summary>
+                <div class="item" label="Paste an offer to read it">
+                    <textarea id="$offerInput" placeholder="Paste an offer"></textarea>
+                </div>
+                <div class="row-reverse">
+                    <button onclick="sellBtc()">Sell</button>
+                </div>
+            </details> -->
+            <div id="$outputSellResult" hidden>
+                <h3>Trade successful!</h3>
+                <div class="item" label="Transaction Id">
+                    <span id="$outputSell"></span>
+                    <a id="$outputSellLink">Show in Explorer</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>Bitcoin DEX</footer>
+    <div class="popup-background" id="$loginPopup" hidde>
+        <header>
+            <img src="assets/bitcoin-dex.svg">
+        </header>
+        <form class="popup" id="$loginForm" action="#" method="post" name="login">
+            <img id="$identiconLogin" class="identicon">
+            <input id="$email" type="email" name="email" placeholder="Enter Email" autocomplete="email" spellcheck="false" oninput="onEmailInput()" disabled="">
+            <input id="$password" type="password" name="email" placeholder="Enter Password" autofocus>
+            <button type="submit">Login</button>
+        </form>
+        <div id="$loading" class="loading" hidden>
+            <img src="assets/circles.svg">
+            <span>decrypting your account</span>
+        </div>
+    </div>
+    <div class="loading-modal" hidden id="$loadingModal">
+        <img src="assets/circles.svg">
+    </div>
+</body>
+<script src="libs/bitcoin.min.js"></script>
+<script src="libs/argon2-web-worker.js"></script>
+<script src="libs/identicon.js"></script>
+<script src="libs/esplora.min.js"></script>
+<script src="config.js"></script>
+<script src="tokens.js"></script>
+<script src="keys.js"></script>
+<script src="ws-client.js" defer></script>
+<script>
+/********************************/
+/*  Currency and Time Formats   */
+/********************************/
+
+
+function formatTime(seconds) {
+    // get total days between two dates
+    const days = Math.floor(seconds / 86400);
+    if (days > 0) return `${days} day${ days === 1 ? '' : 's' }`;
+
+    // get hours        
+    const hours = Math.floor(seconds / 3600) % 24;
+    if (hours > 0) return `${hours} hour${ hours === 1 ? '' : 's' }`;
+
+    // get minutes
+    const minutes = Math.floor(seconds / 60) % 60;
+    if (minutes > 0) return `${minutes} minute${ minutes === 1 ? '' : 's' }`;
+
+    // get seconds
+    seconds = Math.floor(seconds);
+    if (seconds > 0) return `${seconds} second${ seconds === 1 ? '' : 's' }`;
+}
+
+function timeDiff(timestamp1, timestamp2) {
+    const diff = Math.abs(timestamp1 - timestamp2);
+    return formatTime(diff);
+}
+
+function currentTimeDiff(timestamp) {
+    return timeDiff(Date.now() / 1000, timestamp) + ' ago';
+}
+
+function formatUSD(number, maximumFractionDigits = 2) {
+    return new Intl.NumberFormat('en-EN', {
+        style: 'currency',
+        currency: 'USD',
+        currencyDisplay: 'narrowSymbol',
+        maximumFractionDigits,
+    }).format(number / 100)
+}
+
+function formatBTC(amount) {
+    // return (amount / 1e8).toFixed(8) + ' BTC'
+    return (amount < 0 ? '-' : '') + '₿ ' + (Math.abs(amount) / 1e8).toFixed(8)
+}
+
+/********************************/
+/*           UI Code            */
+/********************************/
+
+
+// Global variable for my account 
+let MY_ACCOUNT = {}
+
+$loginForm.onsubmit = async e => {
+    e.preventDefault()
+    const email = $email.value
+    const password = $password.value
+
+
+    $loginForm.hidden = true
+    $loading.hidden = false
+    try {
+        // set global variable
+        MY_ACCOUNT = await login(email, password)
+        // hide login popup
+        $loginPopup.hidden = true
+        // initialize user interface
+        initializeUi(MY_ACCOUNT.address)
+
+        // Remember our email for next login
+        localStorage.setItem('last_email', email)
+    } catch (e) {
+        console.error(e)
+
+        if (e == 'Invalid Password') {
+
+            const $pw = $password
+            setTimeout(_ => {
+                $pw.classList.add('invalid')
+            }, 100)
+
+            setTimeout(_ => {
+                $pw.classList.remove('invalid')
+                $pw.focus()
+            }, 800)
+
+        }
+    }
+    $loginForm.hidden = false
+    $loading.hidden = true
+}
+
+window.onEmailInput = async _ => {
+    const email = $email.value
+    const hash = await hashFn(email, email)
+    $identiconLogin.src = new Identicon(hash, 80).toString();
+}
+
+async function displayMyBalance(myAddress) {
+    // Display address
+    $address.textContent = myAddress
+
+    // Display bitcoin balance
+    const bitcoinBalance = await Esplora.fetchBalance(myAddress)
+    $btcBalance.textContent = formatBTC(bitcoinBalance.total)
+
+    // Display token balance
+    let tokenBalance = await fetchTokenBalance(myAddress)
+    tokenBalance = formatUSD(tokenBalance)
+
+    // Notify user if token balance is unconfirmed
+    if (bitcoinBalance.unconfirmed !== 0) {
+        tokenBalance += ' *'
+        $tokenBalance.title = 'Warning: This balance is unconfirmed and might get reverted. Wait a few blocks for it to confirm.'
+    }
+    $tokenBalance.textContent = tokenBalance
+
+    // Fetch the current market price and display it in a tooltip
+    const marketPrice = await fetchBitcoinPrice()
+    $btcBalance.title = '~' + formatUSD(marketPrice * bitcoinBalance.total / 1e6)
+}
+
+// Update our balance periodically
+(() => {
+    let updatesCounter = 0
+    const interval = setInterval(_ => {
+        // Wait until we're logged in
+        if (!MY_ACCOUNT.address) return;
+
+        // Set our balance
+        displayMyBalance(MY_ACCOUNT.address)
+
+        // Stop polling after 15 min
+        updatesCounter += 1
+        if (updatesCounter > 30) clearInterval(interval);
+    }, 1000 * 30) // Poll every 30 seconds
+})();
+
+async function initializeUi(myAddress) {
+    await displayMyBalance(myAddress)
+    setToMarketPrice()
+
+    setMyIdenticon()
+
+    // Default route
+    if (!location.hash.substr(1))
+        location = '#history'
+    onLocationChange()
+
+    connectToServer()
+
+}
+
+async function setMyIdenticon() {
+    const email = localStorage.getItem('last_email')
+    const hash = await hashFn(email, email)
+    $identicon.src = new Identicon(hash, 80).toString();
+}
+
+function onLocationChange() {
+    const route = location.hash.substr(1)
+    const WHITELIST = ['send', 'sell', 'buy', 'history']
+    // Check if route is in our whitelist
+    if (!WHITELIST.includes(route))
+        return console.warn('Illegal route', route)
+
+    // highlight navi
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('is-active'))
+    document.querySelector('nav a[href="#' + route + '"]').classList.add('is-active')
+
+    // display section
+    document.querySelectorAll('section').forEach(s => s.hidden = true)
+    document.querySelector(`section[route="${route}"]`).hidden = false
+
+    if (route === 'history')
+        displayHistory(MY_ACCOUNT.address)
+}
+
+window.onhashchange = onLocationChange
+
+
+$sendTokens.onclick = async _ => {
+    try {
+        const recipient = $recipient.value
+        if (!recipient) throw 'Enter a recipient'
+        const tokenValue = $tokenValue.value
+        const bitcoinValue = $bitcoinValue.value
+
+        const rawTx = await createTokenTransaction(recipient, tokenValue, MY_ACCOUNT, bitcoinValue)
+        // Let the user confirm the transaction
+        if (!confirm(`Do you want to send ${formatUSD(tokenValue*100)} ${bitcoinValue ? `and ${formatBTC(bitcoinValue)}` : ''} to ${recipient} ?`))
+            return;
+
+        const txid = await Esplora.broadcastTransaction(rawTx)
+        $output.textContent = 'Transaction sent! ' + txid
+
+    } catch (e) {
+        console.error(e)
+        alert(e)
+        return
+    }
+
+}
+
+$maxBitcoinValue.onclick = async _ => {
+    const balance = await Esplora.fetchBalance(MY_ACCOUNT.address)
+    $bitcoinValue.value = balance.total - MIN_FEE
+}
+
+$maxTokenValue.onclick = async _ => {
+    const balance = await fetchTokenBalance(MY_ACCOUNT.address)
+    $tokenValue.value = balance / 100
+}
+
+async function isOverpaying(btcPrice) {
+    const marketPrice = await fetchBitcoinPrice()
+    const FACTOR = 1.10
+    // Do we pay more than 15% too much?
+    if (btcPrice < marketPrice * FACTOR)
+        return true;
+
+    return confirm(`⚠ You are paying more than 10% over market price. Do you want to proceed?`)
+
+}
+
+function updateOfferUi() {
+    const btcPrice = Number($bitcoinPrice.value)
+    const offeredTokenValue = Number($offeredTokenValue.value)
+    const demandedBitcoinValue = Math.floor(offeredTokenValue / btcPrice * 1e8)
+
+    $demandedBitcoinValue.textContent = formatBTC(demandedBitcoinValue)
+}
+
+$bitcoinPrice.oninput = updateOfferUi
+$offeredTokenValue.oninput = updateOfferUi
+
+$buyBtc.onclick = async _ => {
+    const btcPrice = Number($bitcoinPrice.value)
+    const offeredTokenValue = Number($offeredTokenValue.value)
+    const demandedBitcoinValue = Math.floor(offeredTokenValue / btcPrice * 1e8)
+
+    if (!btcPrice)
+        return alert(`Enter a BTC price`)
+
+    if (!offeredTokenValue)
+        return alert(`Enter a USDx amount`)
+
+    // Check if we pay an unusally high bitcoin price
+    if (!await isOverpaying(btcPrice))
+        return;
+
+    //  Let the user confirm the trade
+    if (!confirm(`Do you want to buy ${formatBTC(demandedBitcoinValue)} for ${formatUSD(offeredTokenValue*100)} at a bitcoin price of $${btcPrice}?`))
+        return;
+
+    const { offer, txid } = await createOffer(offeredTokenValue, demandedBitcoinValue, MY_ACCOUNT)
+    // $offer.textContent = offer
+
+    $loadingModal.hidden = false
+
+
+    // HACK: wait a couple of seconds until our split TX arrived in the mempool
+    const timer = setInterval(async _ => {
+        const tx = await Esplora.fetchTransaction(txid)
+        if (!tx) return;
+        clearInterval(timer)
+        socket.send(fromBase64(offer))
+        $loadingModal.hidden = true
+    }, 3000)
+}
+
+
+
+
+$maxOfferedTokenValue.onclick = async _ => {
+    const balance = await fetchTokenBalance(MY_ACCOUNT.address)
+    $offeredTokenValue.value = balance / 100
+    updateOfferUi()
+}
+
+
+async function setToMarketPrice() {
+    const bitcoinPrice = await fetchBitcoinPrice()
+    $bitcoinPrice.value = bitcoinPrice
+    updateOfferUi()
+}
+
+$setToMarketPrice.onclick = setToMarketPrice
+
+window.sellBtc = async _ => {
+    const offer = $offerInput.value
+    _sellBtc(offer)
+}
+
+async function _sellBtc(offer) {
+    try {
+
+        const rawTx = await acceptOffer(offer, MY_ACCOUNT)
+        if (!rawTx) return;
+
+        const txid = await Esplora.broadcastTransaction(rawTx)
+
+        $outputSellResult.hidden = false
+        $outputSell.textContent = txid
+        $outputSellLink.href = EXPLORER_TX_URL + txid
+
+        setTimeout(_ => document.location = '#history', 1000)
+    } catch (e) {
+        console.error(e)
+        alert(e)
+        return
+    }
+}
+
+async function fetchBitcoinPrice() {
+    const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json').then(r => r.json())
+    const price = Math.round(Number(response.bpi.USD.rate_float))
+    return price
+}
+
+
+window.refreshBalance = async function($el) {
+    $el.classList.add('spin');
+    setTimeout(_ => {
+        $el.classList.remove('spin');
+    }, 2000);
+    await displayMyBalance(MY_ACCOUNT.address)
+    await displayHistory(MY_ACCOUNT.address)
+}
+
+function setLastEmail() {
+    const email = localStorage.getItem('last_email')
+    if (!email) return;
+    $email.value = email
+    onEmailInput()
+}
+
+window.onload = function() {
+    setLastEmail()
+}
+
+
+
+function displayOrderbook(orderbook) {
+    _displayOrderbook(orderbook, MY_ACCOUNT.address)
+    displayMyOrders(orderbook, MY_ACCOUNT.address)
+}
+
+function _displayOrderbook(orderbook, myAddress) {
+
+    $orderbook.innerHTML = `
+        <thead>
+            <tr>
+                <th>
+                    BTC
+                </th>
+                <th>
+                    USDx/BTC
+                </th>
+                <th>
+                    USDx
+                </th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+    `
+    orderbook.forEach(order => {
+        // do not display our own offers
+        if (order.theirOutpoint.address === myAddress) return;
+
+        const $tr = document.createElement('tr')
+        const $btc = document.createElement('td')
+        $btc.textContent = formatBTC(order.theirDemandedBitcoinValue)
+        const $exchangeRate = document.createElement('td')
+        $exchangeRate.textContent = formatUSD(order.exchangeRate, 0)
+        const $usd = document.createElement('td')
+        $usd.textContent = formatUSD(order.theirTokenValue)
+
+        const $buttonCell = document.createElement('td')
+        const $button = document.createElement('a')
+        $buttonCell.appendChild($button)
+        $button.textContent = 'SELL'
+
+        $button.onclick = async e => {
+            const offer = order.psbt.toBase64()
+            if (!await _sellBtc(offer)) return
+            // remove row from parent
+            e.target.parentElement.parentElement.remove()
+        }
+
+        $tr.appendChild($btc)
+        $tr.appendChild($exchangeRate)
+        $tr.appendChild($usd)
+        $tr.appendChild($buttonCell)
+
+
+        $orderbook.appendChild($tr)
+
+    })
+}
+// displayOrderbook([])
+
+
+
+function displayMyOrders(orderbook, myAddress) {
+    $myOrders.innerHTML = `
+        <thead>
+            <tr>
+                <th>
+                    USDx
+                </th>
+                <th>
+                    USDx/BTC
+                </th>
+                <th>
+                    BTC
+                </th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+    `
+
+    for (var i = 0; i < orderbook.length; i++) {
+        const order = orderbook[i]
+        if (order.theirOutpoint.address !== myAddress) continue;
+
+
+        const $tr = document.createElement('tr')
+        const $btc = document.createElement('td')
+        $btc.textContent = formatBTC(order.theirDemandedBitcoinValue)
+        const $exchangeRate = document.createElement('td')
+        $exchangeRate.textContent = formatUSD(order.exchangeRate, 0)
+        const $usd = document.createElement('td')
+        $usd.textContent = formatUSD(order.theirTokenValue)
+
+        const $buttonCell = document.createElement('td')
+        const $button = document.createElement('a')
+        $buttonCell.appendChild($button)
+        $button.textContent = 'CANCEL'
+
+        $button.onclick = async e => {
+            // const offer = order.psbt.toBase64()
+            // await _sellBtc(offer)
+            // remove row from parent
+            //e.target.parentElement.parentElement.remove()
+            alert('Not implemented yet')
+        }
+
+        $tr.appendChild($usd)
+        $tr.appendChild($exchangeRate)
+        $tr.appendChild($btc)
+        $tr.appendChild($buttonCell)
+
+
+        $myOrders.appendChild($tr)
+
+    }
+}
+
+
+
+async function displayHistoryTransaction(tx, myAddress) {
+    let tokenOutputsSum = 0;
+    let btcOutputsSum = 0;
+    for (let i = 0; i < tx.vout.length; i++) {
+        const vout = tx.vout[i];
+        if (vout.scriptpubkey_address !== myAddress) continue;
+        const tokenValue = await computeTokenValue(tx.txid, i);
+        tokenOutputsSum += tokenValue;
+        btcOutputsSum += vout.value;
+    }
+    let tokenInputsSum = 0;
+    let btcInputsSum = 0;
+    for (let i = 0; i < tx.vin.length; i++) {
+        const vin = tx.vin[i];
+        if (vin.prevout.scriptpubkey_address !== myAddress) continue;
+        const tokenValue = await computeTokenValue(vin.txid, vin.vout);
+        tokenInputsSum += tokenValue;
+        btcInputsSum += vin.prevout.value;
+    }
+    const fee = tx.fee;
+    const tokenDelta = tokenOutputsSum - tokenInputsSum;
+    let btcDelta = btcOutputsSum - btcInputsSum;
+
+    // Do not display our "split transactions"
+    if (tokenDelta === 0 && btcDelta + fee === 0)
+        return;
+
+
+    let txType = ''
+    let btcPrice = ''
+    if (tokenDelta * btcDelta < 0) {
+        // swap transaction
+        txType = 'ic-swap'
+
+        if (btcDelta < 0) {
+            btcDelta += fee
+        }
+
+        btcPrice = Math.abs(Math.round(tokenDelta / btcDelta * 1e6) * 100)
+
+    } else {
+        // transfer transaction
+
+        if (btcDelta < 0) {
+            // outgoing transfer
+            txType = 'ic-send'
+            btcDelta += fee
+        } else {
+            // ingoing transfer
+            txType = 'ic-receive'
+
+        }
+    }
+
+    const status = tx.status.confirmed ? currentTimeDiff(tx.status.block_time) : 'Unconfirmed ⚠ '
+
+    const explorerUrl = EXPLORER_TX_URL + tx.txid
+
+    $transactions.innerHTML += `<div class="row transaction">
+        <svg class="icon">
+            <use xlink:href="#${txType}"></use>
+        </svg>
+        <div class="tx-status">${status}</div>
+        <div class="grow"></div>
+        <div class="btc-price" title="This swap's USD/BTC price">${btcPrice ? formatUSD(btcPrice,0) : ''}</div>
+        <div class="btc-value" tx-value="${formatBTC(btcDelta)}" ></div>
+        <div class="token-value" tx-value="${formatUSD(tokenDelta)}"></div>
+        <a target="_blank" href="${explorerUrl}" title="Show transaction in blockchain explorer" class="explorer">
+            <svg class="icon icon-button">
+                <use xlink:href="#ic-language"></use>
+            </svg>
+        </a>
+        <!-- <div class="item">${formatBTC(fee)}</div> -->
+    </div>`
+}
+
+async function displayHistory(myAddress) {
+    $transactions.innerHTML = ''
+    const txs = await Esplora.fetchTransactions(myAddress)
+    console.log(txs[0])
+    for (let i = 0; i < txs.length; i++) {
+        await displayHistoryTransaction(txs[i], myAddress)
+    }
+}
+
+async function copyAddressToClipboard() {
+    await navigator.clipboard.writeText(MY_ACCOUNT.address)
+}
+</script>
+
+</html>
+<!-- 
+    
+    SVG Icons Library
+
+ -->
+<svg style="display: none;">
+    <g id="ic-swap">
+        <path d="M0 0h24v24H0V0z" fill="none" />
+        <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" />
+    </g>
+    <g id="ic-receive">
+        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path>
+        <path d="M0 0h24v24H0z" fill="none"></path>
+    </g>
+    <g id="ic-home">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
+        <path d="M0 0h24v24H0z" fill="none"></path>
+    </g>
+    <g id="ic-send">
+        <path d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"></path>
+    </g>
+    <g id="ic-logout">
+        <path d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"></path>
+    </g>
+    <g id="ic-close">
+        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path>
+        <path d="M0 0h24v24H0z" fill="none"></path>
+    </g>
+    <g id="ic-cop y">
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+    </g>
+    <g id="ic-language">
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+    </g>
+</svg>

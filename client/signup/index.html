@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Ensure user accepted disclaimer -->
+    <script>
+        if (!localStorage.getItem('agreed_to_disclaimer')) 
+        location = '../disclaimer/index.html';
+    </script>
+    <meta charset="utf-8">
+    <title>Create Account</title>
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    <style type="text/css">
+    main {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .loading {
+        position: fixed;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        line-height: 22px;
+    }
+
+    .loading span {
+        text-align: center;
+    }
+
+    .error {
+        color: var(--error-color);
+        height: 24px;
+    }
+    </style>
+</head>
+
+<body>
+    <header>
+        <img src="../assets/bitcoin-dex.svg">
+    </header>
+    <main>
+        <form id="signup-form" method="post">
+            <h1>Create Account</h1>
+            <p>Your email address will stay on your computer. No data will be sent to any server. We cannot send you any emails.</p>
+            <div class="row">
+                <div class="item" label="Email">
+                    <input class="input" placeholder="Email" type="email" name="email" id="$email" autocomplete="username">
+                </div>
+            </div>
+            <p>Pick a really good password - many random words, for example - and never use it for anything else. It is a good idea to use a password manager.</p>
+            <div class="row">
+                <div class="item" label="Password">
+                    <input class="input" placeholder="Password" type="password" id="$password1" name="password" autocomplete="new-password">
+                </div>
+                <div class="item" label="Confirm">
+                    <input class="input" placeholder="Confirm" type="password" id="$password2" name="password2" autocomplete="new-password">
+                </div>
+            </div>
+            <p id='$error' class="error">&nbsp;</p>
+            <div class="row-reverse">
+                <button type="submit">Sign Up</button>
+            </div>
+        </form>
+    </main>
+    <footer>Bitcoin DEX</footer>
+    <div class="loading" hidden id="$loading">
+        <img src="../assets/circles.svg">
+        <span>Generating your account<br><span id="$time">~53 seconds</span></span>
+    </div>
+</body>
+<script src="../libs/bitcoin.min.js"></script>
+<script src="../config.js"></script>
+<script src="../libs/argon2-web-worker.js"></script>
+<script src="../keys.js"></script>
+<script>
+document.querySelector('#signup-form').onsubmit = async e => {
+    e.preventDefault()
+    const email = $email.value
+    const password1 = $password1.value
+    const password2 = $password2.value
+    if (password1 !== password2) {
+        $error.textContent = 'Passwords do not match.'
+        return
+    }
+    if (password1.length < 8 && !confirm('Your password seems to be weak. Are you sure you want to continue?')) {
+        return 
+    }
+    $error.textContent = ''
+    showLoading()
+    await login(email, password1)
+    localStorage.setItem('last_email', email)
+    $loading.hidden = true
+    document.location = '../index.html'
+}
+
+
+function showLoading() {
+    $loading.hidden = false
+    let countDown = 53
+    const timer = setInterval(_ => {
+        $time.textContent = `~${countDown} seconds`
+        countDown--;
+        if (countDown >= 0) return;
+        $time.textContent = `Almost done...`
+        clearInterval(timer)
+    }, 1000)
+}
+
+function reset() {
+    $error.textContent = ''
+}
+
+$password1.oninput = reset
+$password2.oninput = reset
+</script>
+
+</html>

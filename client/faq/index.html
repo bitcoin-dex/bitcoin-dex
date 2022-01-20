@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>
+        FAQ | Bitcoin DEX 
+    </title>
+    <link rel="stylesheet" type="text/css" href="../style.css">
+    <style type="text/css">
+    h1 {
+        margin: 0;
+    }
+
+    h2 {
+        margin-top: 56px;
+        margin-bottom: 24px;
+    }
+
+    p {
+        line-height: 22px;
+    }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="../"><img src="../assets/bitcoin-dex.svg"></a>
+    </header>
+    <main>
+        <h1>Frequently Asked Questions</h1>
+        <h2>What is the Bitcoin DEX?</h2>
+        <p>
+            The Bitcoin DEX is a decentralized bitcoin exchange to swap Bitcoins for stablecoins (USDx). The trading protocol is based on <a href="atomic-swap.png" target="_blank">non-interactive atomic swaps</a> which allow you to swap BTC against USDx within a single bitcoin transaction without having to know your counter-party upfront.
+        </p>
+        <p>
+            The Bitcoin DEX is currently a "reckless" prototype which is live on Bitcoin <a href="https://bitcoin-dex.net/">mainnet</a> and <a href="https://testnet.bitcoin-dex.net/">testnet</a>. Its purpose is to demonstrate the basic protocol, and also to measure if there's demand for a decentralized bitcoin exchange. Our current goal is to see if we can build an inital community with a few enthusiastic users who want to help to grow the protocol.
+        </p>
+        <h2>What is USDx?</h2>
+        <p>
+            USDx is a stablecoin on the bitcoin blockchain. It wraps Tether coins (USDt) which are locked in the Ethereum blockchain. USDx can be redeemed for USDt by sending them back to the issuer. Currently, it just uses a trusted peg because there are only $500 locked for testing purposes. However, we are planning to implement a trustless protocol based on <i>optimistic peg outs</i>. It is a crypto-economic protocol that only requires to feed the chain with proof data in case of an attack.
+        </p>
+        <p>You can <a href="https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7?a=0x7138624AB8128F2A96D726CcdaD3FDDd1A5a449b" target="_blank">check the locked USDt here</a> in the address <code>0x7138624AB8128F2A96D726CcdaD3FDDd1A5a449b</code>.</p>
+
+        <h2>What is the underlying token protocol?</h2>
+        <p>
+            The USDx token is based on a custom colored coin protocol which uses client-side validation. Currently, the protocol is very basic and quite similiar to the Omni protocol. It simply encodes the tokens values in OP_RETURN outputs.
+            We're planning to enhance our protocol, e.g., with confidential transactions similar to the RGB protocol.
+        </p>
+        <p>Furthermore, we're investigating if it's possible to implement an algorithmic stablecoin on top of bitcoin.</p>
+        <p>You can find the <a href="../tokens.js" target="_blank">source code of the current protocol here.</a> It's basically only this file at the moment.</p>
+
+        <h2>Where is the testnet version?</h2>
+        <p>
+            You can find <a href="https://testnet.bitcoin-dex.net/">the Testnet DEX</a> here. You can get testnet BTC <a href="https://testnet-faucet.mempool.co/" target="_blank">from this faucet</a> to buy testnet USDx on the Testnet DEX.
+        </p>
+
+        <h2>Can I use USDx on Lightning?</h2>
+        <p>Our very first goal is to see if there is actually demand for a DEX and a stablecoin on bitcoin. If it is possible to grow enough liquidity then there's also lots of potential in using USDx on top of the lightning network for dollar payments that settle instantly.  
+        </p>
+        <h2>What is a WarpWallet?</h2>
+        <p>
+            <a href="https://keybase.io/warp/warp_1.0.9_SHA256_a2067491ab582bde779f4505055807c2479354633a2216b22cf1e92d1a6e4a87.html" target="_blank">The original WarpWallet (created by Keybase.io)</a> allows you to derive your bitcoin seed from your email address and a password. It uses a hard key derivation function (and the email as salt) to make bruteforce attacks expensive.<br>
+            The Bitcoin DEX uses an enhanced WarpWallet protocol. Instead of Scrypt it uses the Argon2d hash function which is even harder. Additonally, your seed is encrypted and stored in your browser which keeps the wait time low after the first "login". 
+        </p>
+
+
+        <h2>How can I ask more questions?</h2>
+        <p>
+            Feel free to ask questions in the <a href="https://t.me/bitcoindex_offical">Bitcoin DEX Telegram channel</a> or on <a href="https://twitter.com/bitcoinDEX_" target="_blank">Twitter</a>.
+        </p>
+
+        <h2>How can I sign up?</h2>
+        <p>
+            <a href="../signup/index.html">Click here to create an account.</a>
+        </p>
+    </main>
+    <footer>Bitcoin DEX</footer>
+</body>
+
+</html>
