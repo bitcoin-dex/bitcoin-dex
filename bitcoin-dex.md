@@ -21,7 +21,14 @@ Non-interactive atomic swaps allow you to swap Bitcoins against Bitcoin Tokens w
 
 Offers are simply incomplete bitcoin transactions signed with `sighash_single|anyonecanpay`.
 
-(TODO: Here, Alice has to sell the full amount of her token UTXO. Ideally, the token protocol would allow Alice to encode her token change in her offer such that she can sell any amount she wants. The crux is that Bob may not invalidate Alice's token transaction.)
+### Offered Amounts
+Here, Alice has to sell the full amount of her token UTXO. Ideally, the token protocol would allow Alice to encode her token change in her offer such that she can sell any amount she wants. The crux is that Bob may not invalidate Alice's token transaction.
+
+The most simple solution is to use a second transaction for the swap. The first transaction splits up the UTXO's token amount into the UTXO to swap and the change UTXO, and the second transaction is the actual swap. 
+
+#### Splitting up Offers 
+Using two transactiosn also also to split up an offer into multiple offers of smaller values. A maker can sign multiple offers which express different conditions to swap the same token UTXO. 
+
 
 ## Non-custodial Orderbook Servers
 **Orderbook servers** relay the non-interactive swaps from offer makers to potential takers. Orderbook servers also ensure
