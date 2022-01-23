@@ -27,7 +27,7 @@ Here, Alice has to sell the full amount of her token UTXO. Ideally, the token pr
 The most simple solution is to use a second transaction for the swap. The first transaction splits up the UTXO's token amount into the UTXO to swap and the change UTXO, and the second transaction is the actual swap. 
 
 #### Splitting up Offers 
-Using two transactiosn also also to split up an offer into multiple offers of smaller values. A maker can sign multiple offers which express different conditions to swap the same token UTXO. 
+Using two transactions it is also possible to split up an offer into multiple offers of smaller values. A maker can sign multiple offers which express different conditions to swap the same token UTXO. 
 
 
 ## Non-custodial Orderbook Servers
