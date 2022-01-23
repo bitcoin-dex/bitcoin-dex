@@ -6,7 +6,7 @@ The Bitcoin DEX originates in my wish list for decentralised finance on bitcoin:
 3. Lightning network support for USDx.
 4. Confidential transactions for USDx.
 
-Some of the above might be very hard or impossible, but the general research direction seems fruitful. The purpose of this project is to systematically explore the above vision for DeFi on Bitcoin. You are invited to criticise and contribute ideas.
+Some of the above might be impossible, but the general research direction seems fruitful. The purpose of this project is to systematically explore the above vision for DeFi on Bitcoin. You are invited to criticise and contribute ideas.
 
 The following is a discussion of a protcol for a decentralised exchange. For now, all other items on the wish list are ignored.
 
