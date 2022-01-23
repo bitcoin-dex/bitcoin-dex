@@ -5,9 +5,10 @@ The Bitcoin DEX originates in my wish list for decentralised finance on bitcoin:
 2. Decentralised exchange with high liquidity for BTC/USDx.
 3. Lightning network support for USDx.
 4. Confidential transactions for USDx.
- 
 
-# Bitcoin DEX 
+Some of the above might be very hard or impossible, but the general research direction seems fruitful. The purpose of this project is to systematically explore the above vision for DeFi on Bitcoin. You are invited to criticise and contribute ideas.
+
+# Bitcoin DEX Protocol
 On a _Bitcoin DEX_ you can trade Colored Coins against Bitcoins. It is permissionless, non-custodial and requires no central party to operate it. Order matching happens mostly offchain, and requires only a single onchain transaction per swap, which makes it feasible to work on top of the bitcoin blockchain. By introducing [trust minimized orderbook servers](#trust-assumptions-for-orderbook-servers) the protocol becomes fast and responsive enough for market makers to provide liquidity.
 
 The _Bitcoin DEX protocol_ consists of three protocols which together form a decentralised bitcoin exchange. 
