@@ -27,8 +27,7 @@ Here, Alice has to sell the full amount of her token UTXO. Ideally, the token pr
 The most simple solution is to use a second transaction for the swap. The first transaction splits up the UTXO's token amount into the UTXO to swap and the change UTXO, and the second transaction is the actual swap. 
 
 #### Splitting up Offers 
-Using two transactions it is also possible to split up an offer into multiple offers of smaller values. A maker can sign multiple offers which express different conditions to swap the same token UTXO. 
-
+Using two transactions for a swap makes offers much more flexible. E.g. it allows you to add to your offer the option to split it into multiple offers of smaller values. If you want you can charge higher prices for smaller offers. You can express all kinds of interesting conditions for takers just by signing multiple offers spending the same output
 
 ## Non-custodial Orderbook Servers
 **Orderbook servers** relay the non-interactive swaps from offer makers to potential takers. Orderbook servers also ensure
