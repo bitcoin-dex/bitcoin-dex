@@ -11,7 +11,7 @@ Some of the above might be very hard or impossible, but the general research dir
 The following is a discussion of a protcol for a decentralised exchange. For now, all other items on the wish list are ignored.
 
 # Bitcoin DEX Protocol
-On a _Bitcoin DEX_ you can trade Colored Coins against Bitcoins. It is permissionless, non-custodial and requires no central party to operate it. Order matching happens mostly offchain, and requires only a single onchain transaction per swap, which makes it feasible to work on top of the bitcoin blockchain. By introducing [trust minimized orderbook servers](#trust-assumptions-for-orderbook-servers) the protocol becomes fast and responsive enough for market makers to provide liquidity.
+On a _Bitcoin DEX_ you can trade Colored Coins against Bitcoins. It is permissionless, non-custodial and requires no central party to operate it. Order matching happens mostly offchain, so the onchain footprint for a swap is small, which makes it feasible on top of bitcoin. By introducing [trust minimized orderbook servers](#trust-assumptions-for-orderbook-servers) to update orders offchain, the protocol becomes fast and responsive enough for market makers to provide liquidity.
 
 The _Bitcoin DEX protocol_ consists of three protocols which together form a decentralised bitcoin exchange. 
 
