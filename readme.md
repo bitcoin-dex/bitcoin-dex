@@ -4,7 +4,7 @@ A decentralised bitcoin exchange based on non-interactive atomic swaps.
 
 ## Frequently Asked Questions
 
-You can [find the FAQ here](https://bitcoin-dex.net/faq).
+You can [find the FAQ here](https://bitcoin-dex.net/faq). You can find the [details of the protocol here](bitcoin-dex.md).
 
 
 ## Related Projects
