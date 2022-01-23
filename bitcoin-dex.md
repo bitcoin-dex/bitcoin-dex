@@ -1,7 +1,7 @@
 # Bitcoin DeFi Vision 
 The Bitcoin DEX originates in my wish list for decentralised finance on bitcoin:
 
-1. An algorithmic stablecoin, USDx, on top of bitcoin.
+1. An algorithmic stablecoin, "USDx", on top of bitcoin.
 2. Decentralised exchange with high liquidity for BTC/USDx.
 3. Lightning network support for USDx.
 4. Confidential transactions for USDx.
