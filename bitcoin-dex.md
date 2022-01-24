@@ -40,7 +40,7 @@ The most simple solution is to use a second transaction for the swap. The first 
 
 
 ### Splitting up Offers 
-Using two transactions for a swap makes offers much more flexible. E.g. it allows you to add to your offer the option to split it into multiple offers of smaller values, which different takers can take independently of each other. If you want you can charge higher prices for smaller offers. You can express all kinds of interesting conditions for takers just by signing multiple offers spending the same output.
+Using two transactions for a swap makes offers much more flexible. E.g. it allows you to add to your offer the option to split it into multiple offers of smaller values, which different takers can take independently of each other. If you want, you can charge higher prices for smaller offers. You can express all kinds of interesting conditions for takers just by signing multiple offers spending the same output.
 
 ## Non-custodial Orderbook Servers
 **Orderbook servers** relay the non-interactive swaps from offer makers to potential takers. Orderbook servers also ensure
