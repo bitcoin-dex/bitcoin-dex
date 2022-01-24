@@ -36,10 +36,11 @@ Offers are simply incomplete bitcoin transactions signed with `sighash_single|an
 ### Offered Amounts
 Here, Alice has to sell the full amount of her token UTXO. Ideally, the token protocol would allow Alice to encode her token change in her offer such that she can sell any amount she wants. The crux is that Bob may not invalidate Alice's token transaction.
 
-The most simple solution is to use a second transaction for the swap. The first transaction splits up the UTXO's token amount into the UTXO to swap and the change UTXO, and the second transaction is the actual swap. 
+The most simple solution is to use a second transaction for the swap. The first transaction splits up the UTXO's token amount into the UTXO to swap and the change UTXO, and the second transaction is the actual swap. The split transaction and the swap can be chained and broadcasted together.
+
 
 #### Splitting up Offers 
-Using two transactions for a swap makes offers much more flexible. E.g. it allows you to add to your offer the option to split it into multiple offers of smaller values, which different takers can take independently of each other. If you want you can charge higher prices for smaller offers. You can express all kinds of interesting conditions for takers just by signing multiple offers spending the same output
+Using two transactions for a swap makes offers much more flexible. E.g. it allows you to add to your offer the option to split it into multiple offers of smaller values, which different takers can take independently of each other. If you want you can charge higher prices for smaller offers. You can express all kinds of interesting conditions for takers just by signing multiple offers spending the same output.
 
 ## Non-custodial Orderbook Servers
 **Orderbook servers** relay the non-interactive swaps from offer makers to potential takers. Orderbook servers also ensure
