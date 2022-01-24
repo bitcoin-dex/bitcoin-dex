@@ -45,7 +45,7 @@ Using two transactions for a swap makes offers much more flexible. E.g. it allow
 ## Orderbook Servers
 **Orderbook servers** relay the non-interactive swaps from offer makers to potential takers. Orderbook servers also ensure
 1. that offers may be time limited 
-2. the swap price may be updated without submitting a new order. 
+2. the swap price may be updated without onchain transactions. 
 
 The idea is inspired by the [Sideswap protocol](https://github.com/sideswap-io/sideswapclient/blob/master/doc/protocol.md) and is very similar to the ideas behind [Liquidex](https://leocomandini.github.io/2021/06/15/liquidex.html#liquidex-2-steps-atomic-swaps). Our orderbook protocol combines them.
 
