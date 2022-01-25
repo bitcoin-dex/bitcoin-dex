@@ -3,7 +3,7 @@ The Bitcoin DEX originates in the following wish list for decentralised finance 
 
 1. An algorithmic stablecoin, "USDx", on top of bitcoin.
 2. Decentralised exchange with high liquidity for BTC/USDx.
-3. Lightning network support for USDx.
+3. Instant and low-cost USDx transactions (probably LN).
 4. Confidential transactions for USDx.
 
 Some of the above might be impossible, but the general direction of research seems to be fruitful. The purpose of this project is to systematically explore this vision for DeFi on Bitcoin in a product-oriented fashion. 
