@@ -8,7 +8,7 @@ The Bitcoin DEX originates in the following wish list for decentralised finance 
 
 Some of the above might be impossible, but the general direction of research seems to be fruitful. The purpose of this project is to systematically explore this vision for DeFi on Bitcoin in a product-oriented fashion. 
 
-The following discusses a protocol for a decentralised exchange. For now, all other items on the wish list are ignored. You are invited to criticise and contribute ideas.
+The following discusses a protocol for a decentralised exchange. For now, all other items on the wish list are ignored for now. 
 
 
 # Bitcoin DEX Protocol
