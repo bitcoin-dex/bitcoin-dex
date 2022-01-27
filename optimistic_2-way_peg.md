@@ -6,6 +6,7 @@ A protocol to peg ETH existing on the Ethereum blockchain to _"wETH"_ (wrapped E
 - We assume all parties run (SPV) clients for both Ethereum and Bitcoin.
 - You as a token holder (or any honest party) watch the Ethereum chain at least once a week.
 - We assume a Colored Coins protocol to represent wETH on top of Bitcoin (e.g. [Bitcoin DEX](https://github.com/bitcoin-dex/bitcoin-dex/blob/main/bitcoin-dex.md), Omni, or maybe RGB).
+- We assume miners can't censor all honest users for one week.
 
 ## Peg-In 
 The peg-in is simple. Scenario: _Alice_ wants to lock ETH on Ethereum and receive wETH on Bitcoin.
