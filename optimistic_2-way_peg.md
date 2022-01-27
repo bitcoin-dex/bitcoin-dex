@@ -70,3 +70,4 @@ Ideally, Ethereum should be aware of bitcoin's full headers chain. There have be
 - The protocol works with any asset on any  blockchain that can implement the peg-out contract. For example, any ERC-20 token, or assets on Binance Chain, Cardano or Solana. 
 - In theory, `OP_CAT` would suffice to implement the peg even in Bitcoin Script. Thus, it should be possible to implement the peg on Liquid or Bitcoin Cash because they've activated this opcode in their Bitcoin Script dialect.
 - In combination with [the Bitcoin DEX protocol](https://github.com/bitcoin-dex/bitcoin-dex/blob/main/bitcoin-dex.md) this peg allows to trade any shitcoin against BTC in a cypherpunk way.
+- Confidential transactions might be compatible if there's a way to verify range proofs on EVM.
