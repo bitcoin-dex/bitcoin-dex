@@ -42,7 +42,7 @@ The following ideas are more sophisticated and are based on the idea to find the
 
 
 ### Deterministic History Commitments
-It is possible to derive history commitments deterministically such that the correct commitment value can be publicly derived from bitcoin's blockchain. This ensures, to resolve a conflict, the parties have to provide only the parts of the history they disagree on. The following is an idea to  disprove invalid history commitments succinctly.
+It is possible to derive history commitments deterministically such that the correct commitment value can be publicly derived from bitcoin's blockchain. This ensures, to resolve a conflict, the parties have to provide only the first part of the history where they differ from each other. The following is an idea to  disprove invalid history commitments succinctly.
 
 ### Compact History Commitment
 
