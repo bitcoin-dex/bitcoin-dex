@@ -1,6 +1,6 @@
 # Trustless Peg between Ethereum and Bitcoin
 
-A protocol to peg ETH existing on the Ethereum blockchain to _"wETH"_ (wrapped ETH) existing on the Bitcoin blockchain. The peg is trustless. It has a small onchain footprint because proof data is required only in case of an attack. Attackers are guaranteed to lose money. The peg works for all assets on all major smart contract platforms. ETH is used only as an example here.
+A protocol to peg ETH existing on the Ethereum blockchain to _"wETH"_ (wrapped ETH) existing on the Bitcoin blockchain. The peg is trustless. It has a small onchain footprint because proof data is required only in case of an attack. Within the security assumptions attackers are guaranteed to fail and lose money. The peg works for all assets on all major smart contract platforms. ETH is used only as an example here.
 
 ## Assumptions
 - We assume all parties run (SPV) clients for both Ethereum and Bitcoin.
