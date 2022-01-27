@@ -30,6 +30,7 @@ The peg-out is a bit more tricky. Scenario: _Carol_ wants to redeem wETH on Bitc
     1. If Carol provides a correct proof then she can take the claimed ETH, and Dave loses his collateral to her.
     1. If Carol doesn't provide a correct proof on time then she loses her collateral to Dave.
 
+This is the basic protocol. The following are optimisations.
 
 ## Proof Data Compression
 Carol's coin history can become quite large. Thus, we want to compress it to save fees. There are a couple of simple improvements possible: 
