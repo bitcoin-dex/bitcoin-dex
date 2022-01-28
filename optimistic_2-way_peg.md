@@ -67,7 +67,7 @@ We can require Alice to commit to an output path in her ETH transaction. Further
 
 Carol can encode a commitment to a coin history with hundreds of transactions in about 2kB. Most importantly, this commitment allows others to succinctly disprove an invalid history with public data. 
 
-Assuming the underlying Colored Coins protocol is sufficiently simple and explicit, Dave should be able to disprove an invalid coin history with only a single bitcoin transaction and an inclusion proof for it. Merkle proofs play nicely together with output paths as they implicitly proof the transaction's index. A commitment to a block's height is in its coinbase output (see [BIP34](https://en.bitcoin.it/wiki/BIP_0034)). Thus, output paths are anchored into the proof-of-work of SPV proofs. Verifying Bitcoin SPV proofs on other chains has been [researched extensively](https://github.com/summa-tx/bitcoin-spv/tree/master/solidity).
+Assuming the underlying Colored Coins protocol is sufficiently simple and explicit, Dave should be able to disprove an invalid coin history with only a single bitcoin transaction and an inclusion proof for it. Merkle proofs play nicely together with output paths as they implicitly proof the transaction's index. A commitment to a block's height is in its coinbase output (see [BIP34](https://en.bitcoin.it/wiki/BIP_0034)). Thus, output paths are anchored into the proof-of-work of SPV proofs. Verifying Bitcoin SPV proofs on other chains has been [researched](https://github.com/summa-tx/bitcoin-spv/tree/master/solidity) [extensively](https://eprint.iacr.org/2020/927.pdf).
 
 Ideally, Ethereum should be aware of bitcoin's full headers chain. There have been projects trying to do that but it seems like they turned out to be too expensive.
 
