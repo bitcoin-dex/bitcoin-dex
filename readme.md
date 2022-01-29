@@ -14,3 +14,4 @@ You can [find the FAQ here](https://bitcoin-dex.net/faq). You can find the [deta
 - [SideSwap](https://github.com/sideswap-io/sideswapclient/blob/master/doc/protocol.md)
 - [Counterparty](https://counterparty.io/)
 - [Stablecoins 2.0: Economic Foundations and Risk-based Models (Paper)](https://arxiv.org/pdf/2006.12388.pdf)
+- [Colored Coins](https://github.com/Colored-Coins/Colored-Coins-Protocol-Specification/)
