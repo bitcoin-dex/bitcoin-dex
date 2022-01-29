@@ -39,6 +39,7 @@ Carol's coin history can become quite large. Thus, we want to compress it to sav
 - Use [header chain compression for the SPV proofs](https://github.com/alecalve/headergolf)
 - Strip off all witness data from all TXs. (Requires the Colored Coins protocol to be constraint to SegWit TXs)
 - Strip off all TXIDs and compute them from previous TXs.
+- Require all fields like `nVersion`, `nLocktime`, `nSequence` to have static values.
 - Store proof data in the contract such that others can reuse them later as basis for their proofs.
 - Limit the depth of the coin history.
 
