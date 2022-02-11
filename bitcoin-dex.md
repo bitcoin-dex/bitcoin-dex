@@ -1,14 +1,14 @@
 # Bitcoin DeFi Vision 
 The Bitcoin DEX originates in the following wish list for decentralised finance on bitcoin:
 
-1. An algorithmic stablecoin, "USDx", on top of bitcoin.
-2. Decentralised exchange with high liquidity for BTC/USDx.
+1. A trustless stablecoin, "USDx", on top of bitcoin.
+2. A decentralised exchange with high liquidity for BTC/USDx.
 3. Instant and low-cost USDx transactions (probably via LN).
 4. Confidential transactions for USDx.
 
 Some of the above might be impossible, but the general direction of research seems to be fruitful. The purpose of this project is to systematically explore this vision for DeFi on Bitcoin in a product-oriented fashion. 
 
-The following discusses a protocol for a decentralised exchange. For now, all other items on the wish list are ignored. You are invited to criticise and contribute ideas.
+The following discusses a protocol for a decentralised exchange. For now, all other items on the wish list are ignored. If you're curious you can find a writeup of the [trustless pegs](https://github.com/bitcoin-dex/bitcoin-dex/blob/main/optimistic_2-way_peg.md) here.
 
 
 # Bitcoin DEX Protocol
