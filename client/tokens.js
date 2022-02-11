@@ -17,6 +17,28 @@ function decodeTokenValue(tx) {
     return Number.parseInt(hexValue, 16)
 }
 
+/********************************/
+/*        TXID Encoding         */
+/********************************/
+
+function idToHash(txid) {
+    return bitcoin.Buffer.from(txid, 'hex').reverse()
+}
+
+function hashToId(hash) {
+    return hash.reverse().toString('hex')
+}
+
+function swapEndianess(hex) {
+    return hex.split(/(..)/).reverse().join('')
+}
+
+function toOutpoint(txid, vout) {
+    vout = BigInt(vout)
+    txid = BigInt('0x' + idToHash(txid).toString('hex'))
+    const outpoint = txid + vout
+    return outpoint.toString(16)
+}
 
 /********************************/
 /*          Send Tokens         */
@@ -106,6 +128,35 @@ async function createTokenTransaction(recipientAddress, tokenValue, myAccount, b
 
 
 /********************************/
+/*       Fetch Peg Ins          */
+/********************************/
+
+async function fetchPegIns() {
+
+    const fromBlock = 4993830
+
+    const response = await fetch(`${ETHEREUM_ENDPOINT}/api?module=logs&action=getLogs&fromBlock=${fromBlock}&address=${ETHEREUM_CONTRACT}&topic0=${ETHEREUM_TOPIC}&apikey=${ETHEREUM_APIKEY}`)
+        .then(r => r.json())
+
+    const pegIns = response.result
+
+    return pegIns.reduce((accu, pegin) => {
+        const data = pegin.data.substr(2) // replace leading "0x"
+        const outpoint = data.substr(0, 64) // first 32 bytes are the outpoint
+        const value = BigInt('0x' + data.substr(64))
+        accu[outpoint] = value
+        return accu
+    }, {})
+}
+
+async function storePegIns(){
+    const pegIns = await fetchPegIns()
+    Object.keys(pegIns).forEach(key => localStorage.setItem(key, pegIns[key]))
+}
+
+storePegIns()
+
+/********************************/
 /*       Receive Tokens         */
 /********************************/
 
@@ -113,7 +164,8 @@ async function createTokenTransaction(recipientAddress, tokenValue, myAccount, b
 // Cached version of _computeTokenValue
 async function computeTokenValue(txid, vout) {
     // Check if the token value is already in our cache
-    const db_key = txid + '_' + vout
+    // Genesis outpoints are inserted during initialization
+    const db_key = toOutpoint(txid, vout)
     let value = localStorage.getItem(db_key)
     if (value !== null && value !== undefined)
         return Number(value);
@@ -133,10 +185,6 @@ async function _computeTokenValue(txid, vout) {
 
     // Read recipient token value
     const recipientTokenValue = decodeTokenValue(tx)
-
-    // The recursion's base case is a genesis transaction 
-    if (isTokenGenesis(tx) && vout === 0)
-        return recipientTokenValue;
 
     // Iterate over all inputs and recurse
     let sumInputs = 0
@@ -208,14 +256,6 @@ async function fetchTokenBalance(myAddress) {
 /*          Trading             */
 /********************************/
 
-
-function idToHash(txid) {
-    return bitcoin.Buffer.from(txid, 'hex').reverse();
-}
-
-function hashToId(hash) {
-    return hash.reverse().toString('hex')
-}
 
 async function createOffer(offeredTokenValue, demandedBitcoinValue, myAccount) {
 

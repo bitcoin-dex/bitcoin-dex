@@ -29,7 +29,7 @@ async function onMessage(msg, ws) {
 
         // Ensure the offer has exactly one input and one output 
         if (psbt.inputCount !== 1 || psbt.txOutputs.length !== 1)
-            throw 'Invalid offer! It should have exactly one input and one output.';
+            throw 'Invalid offer! It should have exactly one input and one output.'
 
 
         // Get the offer's outpoint

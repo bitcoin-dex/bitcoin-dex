@@ -1,0 +1,206 @@
+<link rel="stylesheet" type="text/css" href="../client/style.css">
+<style type="text/css">
+textarea {
+    height: 100px;
+}
+</style>
+<header>
+    <h3>Inclusion Proof Generator</h3>
+</header>
+<main>
+    <div class="row">
+        <div class="item grow" label="Transaction Id">
+            <input placeholder="Enter a TXID" id="$txid" value="34f6cfdefd931528b4ffba45ff524c887621281f48f11e96d98975907684eb48">
+        </div>
+    </div>
+    <div class="row-reverse">
+        <button id="$button">Fetch Proof</button>
+    </div>
+    <div class="row">
+        <div class="item grow" label="Transaction">
+            <textarea id="$transaction"></textarea>
+        </div>
+    </div>
+    <div class="row">
+        <div class="item grow" label="Inclusion Proof">
+            <textarea id="$proof"></textarea>
+        </div>
+    </div>
+    <div class="row" label="Transaction Index">
+        <div class="item" label="Transaction Index">
+            <input placeholder="Index" id="$index">
+        </div>
+    </div>
+    <div class="row">
+        <div class="item grow" label="Headers Chain">
+            <textarea id="$headers"></textarea>
+        </div>
+    </div>
+    <div id="$output"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.0/web3.min.js"></script>
+<script src="../client/libs/bitcoin.min.js"></script>
+<script src="../client/libs/esplora.min.js"></script>
+<script src="../client/config.js"></script>
+<script src="../client/tokens.js"></script>
+
+<script type="module">
+
+import * as Esplora from 'https://bitcoin.robinlinus.com/esplora.js'
+Esplora.useTestnet()
+
+$button.onclick = _ => fetchProofs().catch( e => $output.textContent = e)
+
+
+async function fetchProofs() {
+    const burnTxid = $txid.value
+
+    // Fetch the inclusion proof
+    const rawproof = await Esplora.fetchInclusionProof(burnTxid)
+    const { block_height: blockHeight, merkle, pos : index } = rawproof
+    const proof = '0x' + merkle.map(swapEndianess).reduce((a, e) => a + e, '')
+    $proof.value = proof
+    $index.value = index
+
+    // Fetch headers
+    let headers = ''
+    for (var i = 0; i < 1; i++) {
+        const blockHash = await Esplora.fetchBlockAtHeight(blockHeight + i)
+        const header = await Esplora.fetchBlockHeader(blockHash)
+        headers += header
+    }
+    headers = '0x' + headers
+    $headers.value = headers
+
+    // Fetch the burn transaction
+    const burnTx = await Esplora.fetchTransaction(burnTxid)
+    const fundingTxid = burnTx.vin[0].txid
+    const fundingVout = burnTx.vin[0].vout
+
+    // Fetch the burn transaction's history
+    const history = '0x' + ( await fetchHistoryToGenesis(fundingTxid) )
+    $transaction.textContent = history
+    callContract(headers, proof, index, fundingVout, history)
+}
+
+
+
+function toHex(number, byteSize = 4) {
+    return number.toString('16').padStart(byteSize * 2, 0)
+}
+
+function toHexLE(number, byteSize) {
+    return swapEndianess(toHex(number, byteSize))
+}
+
+function compileTx(tx) {
+    let result = ''
+    result += toHex(tx.vin.length, 1)
+    result += tx.vin.reduce((a, e) => a + compileInput(e), '')
+    result += tx.vout.slice(0, 2).reduce((a, e) => a + compileOutput(e), '')
+    result += decodeTokenValue(tx)
+    return result
+}
+
+function compileInput(vin) {
+    return swapEndianess(vin.txid) + toHexLE(vin.vout, 4)
+}
+
+function compileOutput(vout) {
+    return vout.scriptpubkey.replace(/^0014/, '') +
+        toHexLE(vout.value, 8)
+}
+
+// function decodeTokenValue(tx) {
+//     return tx.vout[2].scriptpubkey.replace(/^6a04/, '')
+// }
+
+
+const CACHE = {}
+
+function txidToCacheKey(txid){
+    return swapEndianess(txid).substr(0,62)
+}
+
+async function storePegIns(){
+    const pegIns = await fetchPegIns()
+    Object.keys(pegIns).forEach(key => CACHE[key.substr(0,62)] = true)
+}
+
+storePegIns()
+
+// Cached version of _computeTokenValue
+async function fetchHistoryToGenesis(txid) {
+    // Check if the token value is already in our cache
+    let db_key = txidToCacheKey(txid)
+    let value = CACHE[db_key]
+    if (value === null)
+        return null;
+    if (value !== undefined)
+        return '';
+
+    // Otherwise, compute token value and cache it
+    value = await _fetchHistoryToGenesis(txid)
+    CACHE[db_key] = value === null ? null : true
+    return value
+}
+
+
+async function _fetchHistoryToGenesis(txid) {
+    const tx = await Esplora.fetchTransaction(txid)
+    // Has the transaction the correct format?
+    if (!isTokenTransactionFormat(tx))
+        return null;
+
+    const txHex = compileTx(tx)
+
+    let history = ''
+    let hasChildren = false;
+    for (let i = 0; i < tx.vin.length; i++) {
+        const vin = tx.vin[i]
+        const prev = await fetchHistoryToGenesis(vin.txid)
+        if(prev === null) continue;
+        hasChildren = true
+        history += prev
+    }
+    if(!hasChildren)
+        return null
+
+    return history + txHex
+}
+
+// function isTokenTransactionFormat(tx) {
+//     // Check if there are exactly 3 outputs
+//     if (tx.vout.length !== 3) return false;
+
+//     // Check if third output is an OP_RETURN followed by OP_PUSH(4)
+//     return tx.vout[2].scriptpubkey.startsWith('6a04')
+// }
+
+
+async function callContract(headers, proof, index, fundingVout, history){
+        // Ensure meta mask is installed
+    if (typeof window.ethereum === 'undefined') {
+        alert('Install MetaMask')
+        location = 'https://metamask.io/download/'
+        return
+    }
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
+    window.web3 = new Web3(window.ethereum)
+
+    const abi = await fetch('contract-abi.json').then(r => r.json())
+    const contract = new web3.eth.Contract(abi, ETHEREUM_CONTRACT);
+    contract.methods.pegOut(headers, proof, index, fundingVout, history).send({
+        from: ethereum.selectedAddress
+    }).on('transactionHash', function() {
+        $output.textContent = 'Waiting for confirmation...'
+    })
+    .on('receipt', function(receipt) {
+        $output.textContent = 'Success!\n\n' + JSON.stringify(receipt, null, 2)
+    })
+    .on('error', function(error) {
+        $output.textContent = JSON.stringify(error.message, null, 2)
+    })
+}
+
+</script>

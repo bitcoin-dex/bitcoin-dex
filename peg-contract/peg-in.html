@@ -1,0 +1,107 @@
+<link rel="stylesheet" type="text/css" href="../client/style.css">
+<header>
+    <h3>Peg in to Bitcoin</h3>
+</header>
+<main>
+    <div class="row">
+        <div class="item" label="Email">
+            <input type="email" id="$email" placeholder="email">
+        </div>
+        <div class="item" label="Password">
+            <input type="password" id="$password" placeholder="password">
+        </div>
+    </div>
+    <div class="row">
+        <div class="item" label="USD Value">
+            <input id="$value" value="12345670000000000">
+        </div>
+    </div>
+    <div class="item" label="Peg-in UTXO" id="$utxo" style="white-space: pre;"></div>
+    <div class="row-reverse">
+        <button id="$button">peg in</button>
+    </div>
+    <div id="$output" style="white-space: pre;"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.0/web3.min.js"></script>
+<script src="../client/libs/argon2-web-worker.js"></script>
+<script src="../client/libs/bitcoin.min.js"></script>
+<script src="../client/keys.js"></script>
+<script src="../client/config.js"></script>
+<script src="../client/libs/esplora.min.js"></script>
+<script>
+// Set the network Esplora should use
+if (NETWORK == bitcoin.networks.testnet) Esplora.useTestnet()
+
+function swapEndianess(hex) {
+    return hex.split(/(..)/).reverse().join('')
+}
+
+async function initialize() {
+    // Ensure meta mask is installed
+    if (typeof window.ethereum === 'undefined') {
+        alert('Install MetaMask')
+        location = 'https://metamask.io/download/'
+        return
+    }
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
+    window.web3 = new Web3(window.ethereum)
+
+    // $accounts.textContent = accounts.reduce((a, e) => a + e, '')
+}
+
+async function fetchGenesisOutput(address) {
+    const utxos = await Esplora.fetchUnspentOutputs(address)
+    if (!utxos.length) throw `${address} has no UTXOs`
+    const { txid, vout } = utxos[0]
+    const txid_be = '0x' + swapEndianess(txid)
+    return { txid: txid_be, vout }
+}
+
+let MY_ACCOUNT;
+async function pegIn() {
+
+    // Log in
+    $button.disabled = true
+    $button.textContent = 'loading...'
+    $output.textContent = 'Logging in...'
+    try {
+        MY_ACCOUNT = await login($email.value, $password.value)
+    } catch (e) {
+        $output.textContent = e
+        reset()
+    }
+
+    const utxo = await fetchGenesisOutput(MY_ACCOUNT.address)
+    $utxo.textContent = JSON.stringify(utxo, null, 2)
+
+    const value = '0x' + Number($value.value).toString(16)
+
+    const { txid, vout } = (await fetchGenesisOutput(MY_ACCOUNT.address))
+
+    const abi = await fetch('contract-abi.json').then(r => r.json())
+
+    $output.textContent = 'Confirm in MetaMask...'
+    const contract = new web3.eth.Contract(abi, ETHEREUM_CONTRACT);
+    contract.methods.pegIn(txid, vout).send({
+            from: ethereum.selectedAddress,
+            value: value
+        }).on('transactionHash', function() {
+            $output.textContent = 'Waiting for confirmation...'
+        })
+        .on('receipt', function(receipt) {
+            $output.textContent = 'Success!\n\n' + JSON.stringify(receipt, null, 2)
+        })
+        .on('error', function(error) {
+            $output.textContent = JSON.stringify(error.message, null, 2)
+            reset()
+        })
+}
+
+function reset() {
+    $button.disabled = false
+    $button.textContent = 'Peg in'
+}
+
+$button.onclick = pegIn
+window.addEventListener('DOMContentLoaded', initialize);
+</script>

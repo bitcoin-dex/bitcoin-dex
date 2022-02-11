@@ -1,0 +1,129 @@
+<link rel="stylesheet" type="text/css" href="../client/style.css">
+<style type="text/css">
+textarea {
+    height: 100px;
+}
+</style>
+<header>
+    <h3>Inclusion Proof Generator</h3>
+</header>
+<main>
+    <div class="row">
+        <div class="item grow" label="Transaction Id">
+            <input placeholder="Enter a TXID" id="$txid" value="34aac0b221533cbcae99e90971ff4d88bd9baebd314e7c49a1680abe4f6b4a0f">
+        </div>
+    </div>
+    <div class="row-reverse">
+        <button id="$button">Fetch Proof</button>
+    </div>
+    <div class="row">
+        <div class="item grow" label="Transaction">
+            <textarea id="$transaction"></textarea>
+        </div>
+    </div>
+    <div class="row">
+        <div class="item grow" label="Inclusion Proof">
+            <textarea id="$proof"></textarea>
+        </div>
+    </div>
+    <div class="row" label="Transaction Index">
+        <div class="item" label="Transaction Index">
+            <input placeholder="Index" id="$index">
+        </div>
+    </div>
+    <div class="row">
+        <div class="item grow" label="Headers Chain">
+            <textarea id="$headers"></textarea>
+        </div>
+    </div>
+</main>
+<script type="module">
+    // import * as Esplora from 'https://coins.github.io/esplora-js/esplora.js'
+import * as Esplora from 'https://bitcoin.robinlinus.com/esplora.js'
+Esplora.useTestnet()
+
+$button.onclick = async function() {
+    const txid = $txid.value
+
+    // Fetch the inclusion proof
+    const rawproof = await Esplora.fetchInclusionProof(txid)
+    const { block_height: blockHeight, merkle, pos } = rawproof
+    const proof = merkle.map(swapEndianess).reduce((a, e) => a + e, '')
+    $proof.value = '0x' + proof
+    $index.value = pos
+
+    // Fetch headers
+    let headers = ''
+    for (var i = 0; i < 1; i++) {
+        const blockHash = await Esplora.fetchBlockAtHeight(blockHeight + i)
+        const header = await Esplora.fetchBlockHeader(blockHash)
+        headers += header
+    }
+    $headers.value = '0x' + headers
+
+    // Fetch the transaction
+    const transaction = await Esplora.fetchTransaction(txid)
+    const txHex = compileSegWitTxParts(transaction)
+
+    $transaction.textContent = txHex
+}
+
+function swapEndianess(hex) {
+    return hex.split(/(..)/).reverse().join('')
+}
+
+function toHex(number, byteSize = 4) {
+    return number.toString('16').padStart(byteSize * 2, 0)
+}
+
+function toHexLE(number, byteSize) {
+    return swapEndianess(toHex(number, byteSize))
+}
+
+function compileSegWitTxParts(tx) {
+    let vins = ''
+    vins += toHex(tx.vin.length, 1)
+    vins += tx.vin.reduce((a, e) => a + compileInput(e), '')
+    let vouts = toHex(tx.vout.length, 1)
+    vouts += tx.vout.reduce((a, e) => a + compileOutput(e), '')
+    return ['0x'+vins, '0x'+vouts]
+}
+
+function compileSegWitTx(tx) {
+    let result = ''
+    result += toHexLE(tx.version)
+    // result += '0001' // segwit flag
+    result += toHex(tx.vin.length, 1)
+    result += tx.vin.reduce((a, e) => a + compileInput(e), '')
+    result += toHex(tx.vout.length, 1)
+    result += tx.vout.reduce((a, e) => a + compileOutput(e), '')
+    result += toHexLE(tx.locktime)
+    return result
+}
+
+function compileInput(vin) {
+    return swapEndianess(vin.txid) +
+        toHexLE(vin.vout) +
+        '00' // scriptSig. Works only for SegWit transactions!
+        +
+        toHex(vin.sequence)
+}
+
+function compileOutput(vout) {
+    return toHexLE(vout.value, 8) +
+        toHex(vout.scriptpubkey.length / 2, 1) +
+        vout.scriptpubkey
+}
+
+
+/*
+
+Format
+
+vin_count: byte1 
+vin_count: byte1 
+
+*/
+
+
+</script>

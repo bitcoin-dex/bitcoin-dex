@@ -1,0 +1,107 @@
+<link rel="stylesheet" type="text/css" href="../client/style.css">
+<header>
+    <h3>Peg out to Ethereum</h3>
+</header>
+<main>
+    <div class="row">
+        <div class="item" label="Email">
+            <input type="email" id="$email" placeholder="email">
+        </div>
+        <div class="item" label="Password">
+            <input type="password" id="$password" placeholder="password">
+        </div>
+    </div>
+    <div class="row-reverse">
+        <button id="$button">Peg out</button>
+    </div>
+    <div id="$output" style="white-space: pre;"></div>
+</main>
+<script src="../client/libs/argon2-web-worker.js"></script>
+<script src="../client/keys.js"></script>
+<script src="../client/libs/bitcoin.min.js"></script>
+<script src="../client/libs/esplora.min.js"></script>
+<script src="../client/config.js"></script>
+<script type="text/javascript">
+// Set the network Esplora should use
+if (NETWORK == bitcoin.networks.testnet) Esplora.useTestnet()
+
+let MY_ACCOUNT;
+$button.onclick = async function burnBTC() {
+    // Ensure meta mask is installed
+    if (typeof window.ethereum === 'undefined') {
+        alert('Install MetaMask')
+        location = 'https://metamask.io/download/'
+        return
+    }
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
+    const ethereumAddress = accounts[0]
+
+
+    // Log in
+    $button.disabled = true
+    $button.textContent = 'loading...'
+    try {
+        MY_ACCOUNT = await login($email.value, $password.value)
+    } catch (e) {
+        $output.textContent = e
+    }
+
+    // Fetch utxos
+    const utxos = await Esplora.fetchUnspentOutputs(MY_ACCOUNT.address)
+
+    // Select the UTXO to burn
+    const utxo = utxos.find( u => u.value === MIN_OUTPUT_VALUE ) // TODO: let the user select his UTXO
+
+    if(!utxo){
+        alert('No UTXO found. Send yourself a token transaction with the value you want to peg out.')
+        return
+    }
+
+    // Fetch the token value
+    const tokenValue = localStorage.getItem(`${utxo.txid}_${utxo.vout}`)
+
+    if (!confirm(`Do you want to peg out?\n\nUTXO to burn:\n${utxo.txid}:${utxo.vout}\n$${tokenValue/100}   (${utxo.value} sats)\n\nto Ethereum address:\n${ethereumAddress}`))
+        return
+
+    // Ask the user to confirm if he pays a lot of fees
+    if(utxo.value > 3 * MIN_OUTPUT_VALUE && !confirm(`Are you sure you want to pay a fee of ${utxo.value} sats?`))
+        return
+
+    const burnTxHex = burnTx(utxo, ethereumAddress)
+    const burnTxid = await Esplora.broadcastTransaction(burnTxHex)
+
+    $output.textContent = 'Success!\nTXID: ' + burnTxid
+}
+
+function burnTx(utxo, ethereumAddress) {
+    const psbt = new bitcoin.Psbt({ network: NETWORK })
+
+    psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        witnessUtxo: { script: MY_ACCOUNT.output, value: utxo.value }
+    })
+
+    // Data field output with ethereum address 
+    psbt.addOutput({
+        script: encodeEthereumAddress(ethereumAddress),
+        value: 0,
+    })
+
+    // Sign all the inputs
+    psbt.signAllInputs(MY_ACCOUNT.keyPair)
+
+    // Finalize all inputs
+    psbt.finalizeAllInputs()
+
+    // Return hex encoded transaction to broadcast
+    return psbt.extractTransaction().toHex()
+}
+
+function encodeEthereumAddress(address) {
+    // Remove leading "0x"
+    address = address.replace('0x', '')
+    const data = bitcoin.Buffer.from(address, 'hex');
+    return bitcoin.payments.embed({ data: [data] }).output
+}
+</script>

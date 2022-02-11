@@ -1,0 +1,143 @@
+[
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "genesisOutpoints",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "chain",
+				"type": "bytes"
+			},
+			{
+				"name": "proof",
+				"type": "bytes"
+			},
+			{
+				"name": "index",
+				"type": "uint32"
+			},
+			{
+				"name": "fundingVout",
+				"type": "uint32"
+			},
+			{
+				"name": "history",
+				"type": "bytes"
+			}
+		],
+		"name": "pegOut",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "usedBurnTxs",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "txid",
+				"type": "uint256"
+			},
+			{
+				"name": "vout",
+				"type": "uint32"
+			}
+		],
+		"name": "pegIn",
+		"outputs": [],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "utxoSet",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"name": "minWork",
+				"type": "uint256"
+			},
+			{
+				"name": "minChainLength",
+				"type": "uint32"
+			},
+			{
+				"name": "minValue",
+				"type": "uint32"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "txid",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "PegInEvent",
+		"type": "event"
+	}
+]
