@@ -36,7 +36,7 @@ textarea {
             <textarea id="$headers"></textarea>
         </div>
     </div>
-    <div id="$output"></div>
+    <div id="$output" style="white-space: pre;"></div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.0/web3.min.js"></script>
 <script src="../client/libs/bitcoin.min.js"></script>
@@ -111,9 +111,9 @@ function compileOutput(vout) {
         toHexLE(vout.value, 8)
 }
 
-// function decodeTokenValue(tx) {
-//     return tx.vout[2].scriptpubkey.replace(/^6a04/, '')
-// }
+function decodeTokenValue(tx) {
+    return tx.vout[2].scriptpubkey.replace(/^6a04/, '')
+}
 
 
 const CACHE = {}
