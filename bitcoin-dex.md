@@ -1,16 +1,3 @@
-# Bitcoin DeFi Vision 
-The Bitcoin DEX originates in the following wish list for decentralised finance on bitcoin:
-
-1. A trustless stablecoin, "USDx", on top of bitcoin.
-2. A decentralised exchange with high liquidity for BTC/USDx.
-3. Instant and low-cost USDx transactions (probably via LN).
-4. Confidential transactions for USDx.
-
-Some of the above might be impossible, but the general direction of research seems to be fruitful. The purpose of this project is to systematically explore this vision for DeFi on Bitcoin in a product-oriented fashion. 
-
-The following discusses a protocol for a decentralised exchange. For now, all other items on the wish list are ignored. If you're curious you can find a writeup of the [trustless pegs](https://github.com/bitcoin-dex/bitcoin-dex/blob/main/optimistic_2-way_peg.md) here.
-
-
 # Bitcoin DEX Protocol
 On a _Bitcoin DEX_ you can trade Colored Coins against Bitcoins. It is permissionless, non-custodial and requires no central party to operate it. Order matching happens mostly offchain, so the onchain footprint for a swap is small, which makes it feasible on top of bitcoin. By introducing [trust minimized orderbook servers](#trust-assumptions-for-orderbook-servers) to update orders offchain, the protocol becomes fast and responsive enough for market makers to provide liquidity.
 
@@ -67,3 +54,4 @@ As long as nobody took her offer, Alice can update or cancel it. Then the server
 - Orderbook servers are trusted to actually delete signatures for outdated offers. Otherwise, they can execute outdated offers. Orderbook servers are also trusted not to exploit free options. To be completely safe users have to update/cancel their offers via onchain transactions. 
 - For every user, trust can be reduced to a single orderbook server which relays their offers to other orderbook servers but without signatures. Alternatively, a user can distribute trust among a t-of-n quorum of servers by splitting up their signature with Shamir secret sharing (or better, verifiable secret sharing?). 
 - Offers should not use replace-by-fee. Otherwise, they become free options as soon as they are broadcasted to the bitcoin network. If the price moves while a swap TX is in the mempool (but not yet mined) then the "losing party" can cancel the trade by double-spending their output with RBF.
+
